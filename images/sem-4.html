@@ -1,0 +1,246 @@
+<HTML>
+  <HEAD>
+    <TITLE>SM in WWWeb: research: Seminararbeitarbeit: Kapitel 4</TITLE>
+    <LINK REV="made" HREF="mailto:Marc.Schanne@stud.uni-karlsruhe.de">
+    <LINK HREF="../CSS/sminwwweb.css" REL="stylesheet" TYPE="text/css">
+    <STYLE TYPE="text/css">
+      BODY      { background-color: #FFFFFF; color: #000000; }
+      A:link    { color: #555555; }
+      A:active  { color: #555555; }
+      A:visited { color: #555555; }
+    </STYLE>
+  </HEAD>
+  <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#555555" ALINK="#555555" VLINK="#555555">
+<PRE WIDTH=64>
+</PRE>
+
+<A NAME="Abb4"><IMG SRC="PICTURES/cond_GET.gif" ALT=""><BR CLEAR=ALL>
+<U>Abbildung 4:</U> Conditional GET, eine Erweiterung von HTTP/1.0</A>
+
+<H1>4 Aktuelle Ans&auml;tze bei Caching Problemen</H1>
+<A NAME="1"><H2>4.1 Koh&auml;renz</H2></A>
+Alle Web Caches m&uuml;ssen versuchen die gespeicherten Objekte aktuell zu 
+halten. Dieses Problem ist aus traditionellen verteilten Systemen bekannt. 
+Prinzipiell ist das Web nur eingr&ouml;sseres verteiltes Dateisystem und 
+verteilte Dateisysteme werden seit Jahren erfolgreich eingesetzt.
+<P>Koh&auml;renz-Mechanismen kann man in zwei generelle Klassen einteilen:
+<EM>validation check</EM> und <EM>callback</EM> Mechanismen. Die 
+<A HREF="sem-3.html#Abb3">Abbildung 3</A> zeigt die zwei grundlegenden Techniken, 
+mit der die Korrektheit und Aktualit&auml;t eines gecacheten Objekts garantiert 
+werden kann.
+<P>Die Gr&ouml;ssenordnung des WWW bedingt, dass dort eigentlich 
+nur die Koh&auml;renzpr&uuml;fung &uuml;ber validation check praktikabel 
+ist. Eine einzelne Seite kann in Tausend oder Millionen Caches (jeder 
+Web-Browser ist einer) gespeichert werden. Dies macht es f&uuml;r einen 
+Server unm&ouml;glich, alle Caches zu benachrichtigen. Durch eine 
+hierarchische Struktur k&ouml;nnte manzwar die Zahl der zu 
+benachrichtigenden Caches verringern, aber es bleibt ineffektiv 
+bei jeder &Auml;nderung irgendeiner Seite im WWW eine Notify-Lawine zu 
+starten.
+<P>Naive Koh&auml;renz-Mechanismen sind die am Beispiel heutiger Browser 
+schon angesprochenen Check-Every-Time und Check-Never Mechanismen. Im 
+ersten Fall wird immer, wenn ein GET oder conditional GET12 f&uuml;r 
+eine gecachete Seite eingeht, ein conditional GET an den 
+n&auml;chsth&ouml;heren Cache oder an den Server gesendet. Das 
+conditional GET erg&auml;nzt das normale GET des HTTP/1.0 um ein Not 
+Modified. Der Client erweitert die GET-Anfrage um eine If-Modified-Since 
+Zeile mit dem Datum der im Cache gespeicherten Seite. Ist das 
+Originaldokument unver&auml;ndert, antwortet der Server mit einem 304 
+Not Modified und derClient zeigt die lokale Kopie an. Im anderen Fall 
+sendet der Server ein 200 OK und die neue HTML-Seite. Der 
+Check-Every-Time-Ansatz in Zusammenhang mit einem conditional GET war der 
+erste eingesetzte Koh&auml;renz-Mechanismus. F&uuml;r den umfangreichen 
+Einsatz im World Wide Web ist er allerdings wenig brauchbar. Wenn jeder 
+Cache mit einem conditional GET an einen&uuml;bergeordneten Cache bzw. 
+an den Server selbst reagiert, wird jede Anfrage bis zum Server 
+durchgereicht. Dies f&uuml;hrt, selbst wenn keine HTML-Daten&uuml;bertragen 
+werden m&uuml;ssen, zu&uuml;berm&auml;ssiger Netzlast und reduziert die 
+Anzahl der Anfragen an den Remote Server nicht.Der zweite naive 
+Koh&auml;renz-Mechanismus, der oben angesprochen wird: Never-Check,
+&uuml;berpr&uuml;ft nie, ob die gecachete Seite noch aktuell ist. Um 
+eine Seite explizit neu zu laden, muss der User einen Header mit 
+Pragma:no-Cache-Zeile verwenden. Diese Technik verringert zwar die 
+Netzlast, gibt aber keinerlei Garantie f&uuml;r die Aktualit&auml;t 
+des&uuml;bertragen Dokuments.
+
+HTTP/1.1<SUP><A HREF="#Fuss13">13</A></SUP> ist die Weiterentwicklung des 
+Hypertext Transfer Protocol 1.0 und bietet neben Fortschritten, wie 
+Pipelining und Kompression, auch hinsichtlich des Cachings einige 
+zus&auml;tzliche M&ouml;glichkeiten <A HREF="sem-l.html#Fie97">[Fie97]</A>. Caching in HTTP/1.1 
+basiert auf zwei unterschiedlichen Ans&auml;tzen: dem Expiration- und 
+dem Validation-Modell.
+
+<H3>Expiration</H3>
+Das Expiration-Modell definiert ein Verfalldatum f&uuml;r eine Seite. 
+So k&ouml;nnen Zugriffe auf den Server eingespart werden, wenn ein 
+aktuelles Dokument im Cache-Speicher existiert.
+<P>Entweder gibt ein Server f&uuml;r eine Seite explizit eine Verfallzeit 
+an, oder der Proxy Cacheberechnet eine heuristische. F&uuml;r den zweiten 
+Fall gibt die HTTP/1.1-Spezifikation zwar keine Algorithmen, aber 
+Rahmenvorgaben f&uuml;r ihr Ergebnis an. Alle Server sind aufgefordert, 
+so oftwie m&ouml;glich eine explizite Expiration-Zeit anzugeben, da die 
+heuristischen Grenzzeiten nur mit Vorsicht zu betrachten sind <A HREF="sem-l.html#Fie97">[Fie97]</A>.
+
+<H3>Validation</H3>
+Unter dem Validation-Modell fasst das RFC 2068 die Techniken des 
+Hypertext Transfer Proto-cols zur Pr&uuml;fung von Kopien im Cache 
+auf G&uuml;ltigkeit (unver&auml;ndert gegen&uuml;ber dem Original)
+zusammen. Sowohl das vom conditional GET bekannte Last-Modified-Datum, 
+als auchzus&auml;tzliche Entity Tags, sind hier zum Abgleich zwischen 
+Cache und Server vorgesehen.
+
+<H3>Allgemein</H3> 
+Zus&auml;tzlich zu den beiden oben angegebenen Modellen werden in der 
+HTTP/1.1-Spezifikation, in einem eigenen Kapitel zu Caching weitere 
+Rahmenbedingungen bez&uuml;glich Korrektheit undTransparenz f&uuml;r 
+Server, Clients und Caches festgelegt. Implementiert ist der neue 
+Standard aber erst bei wenigen Referenzprodukten. Einige Teile, 
+insbesondere Entwicklungen der Caching-M&ouml;glichkeiten, sind aber 
+schon bei mehreren HTTP/1.0-Anwendungen hinzugef&uuml;gt.
+<P>Weitere &Uuml;berlegungen <A HREF="sem-l.html#DP96">[DP96]</A> betonen die Notwendigkeit, dem 
+Benutzer eine Art G&uuml;ltigkeitsgarantie in Prozent zu bieten. Zu 
+jedem gesendeten Dokument sollte dem Benutzer zus&auml;tzlich das 
+Expiration-Datum oder die spekulative Berechnung des Caches offengelegt 
+werden. Wenn das so angezeigte Dokument nicht den Bedingungen des 
+Benutzers gen&uuml;gt,kann er explizit eine "bessere" Kopie aus einem 
+h&ouml;heren Cache oder direkt vom Orginal-Server anfordern.
+
+<A NAME="2"><H2>4.2 Effizienz</H2></A>
+Die zweite Hauptforderung neben Koh&auml;renz an Web Caches ist Effizienz. 
+Dies kann nur &uuml;ber eine hohe Treffer-Quote erreicht werden. Und da 
+derzeitige Caches nur einen relativbeschr&auml;nkten Speicherraum 
+besitzen, besteht die Notwendigkeit,&auml;ltere Dokumente aus dem Speicher 
+zu l&ouml;schen. Der von Festplatten und RAM-Caches bekannte, und dort 
+optimale Algorithmus Least Recently Used (LRU), ist beim Caching von WWW 
+Objekten nicht optimal <A HREF="sem-l.html#Abr95">[Abr95]</A>. Im Folgenden wird ein kurzer 
+&Uuml;berblick&uuml;ber die Problematik gegeben und ein Vergleich 
+verschiedener denkbarer Ersetzungsstrategien versucht.
+
+<H3>LRU - Least Recently Used</H3>
+Der klassische LRU-Ersetzungsalgorithmus l&ouml;scht solange das least 
+recently used Objekt aus dem Cache, bis gen&uuml;gend freier Platz 
+f&uuml;r das neue Objekt geschaffen ist. LRU ersetzt so vielleicht 
+auch mehrere kleine Dokumente, um Raum f&uuml;r ein grosses zu schaffen.
+<H3>LRU/MIN</H3>
+Diese Variante des LRU-Algorithmus versucht die Anzahl der zu ersetzenden 
+Dokumente zu minimieren. Hier eine kurze formale Beschreibung analog 
+<A HREF="sem-l.html#Abr95">[Abr95]</A>: Liste L, Integer T, Gr&ouml;sse des neuen Objekts S
+<OL>
+  <LI>T = S 
+  <LI>L = Liste alle Dokumente im Cache gleich oder gr&ouml;sser als T (L kann leer sein)
+  <LI>L&ouml;schen des LRU-Dokuments von der Liste, bis L leer oder der 
+      freie Cache Platz gr&ouml;sser oder gleich T
+  <LI>Falls freier Cache-Speicher ! S, dann T = T/2 und weiter mit 2.
+</OL>
+<H3>LRU/THOLD</H3>
+Diese Ersetzungsstrategie ist identisch zu LRU, nur werden Objekte, die 
+gr&ouml;sser als einefestgelegte Threshold-Gr&ouml;sse sind, nicht 
+gecachet. So wird verhindert, dass im Verh&auml;ltnis zur Cache-Gr&ouml;sse 
+sehr grosse Dokumente viele kleinere Dokumente verdr&auml;ngen. Selbst 
+wenn gen&uuml;gend freier Platz im Cache-Speicher existiert wird das 
+Objekt nicht gespeichert.
+
+<H3>LFU - Least Frequently Used</H3>
+LFU ersetzt das least frequently used Dokument im Cache. Hier wird nicht
+&uuml;ber die Zeit seit dem letzten Zugriff, sondern&uuml;ber die 
+H&auml;ufigkeit des Zugriffs entschieden. Besonders popul&auml;re 
+Dokumente werden so bevorzugt. Insbesondere f&uuml;r die Verwendung 
+bei Proxies ist die LFU Ersetzungsstrategie g&uuml;nstiger als der 
+LRU-Algorithmus <A HREF="sem-l.html#Wil96">[Wil96]</A>.
+
+<H3>SIZE</H3>
+Proxies k&ouml;nnen aber auch versuchen, die n&ouml;tige 
+Netzwerkbandbreite zu minimieren. SIZEist ein Ersetzungsalgorithmus, 
+der mit H&auml;ufigkeit und Gr&ouml;sse&uuml;ber die Ersetzung von 
+Cache Objekten entscheidet.
+
+<H3>LAT - Latency Estimation Algorithm</H3>
+Dieser Algorithmus, n&auml;her beschrieben in <A HREF="sem-l.html#WA97">[WA97]</A>, macht die 
+Ersetzung eines Cache-Objekts direkt von der Download-Zeit 
+abh&auml;ngig. Eine WWW-Benutzer Umfrage des Graphic, Visualization & 
+Usability Centers (GVU) ergab, dass Geschwindigkeit das Hauptproblem 
+von WebBenutzern ist. Der LAT-Algorithmus ist direkt von diesem 
+Ergebnis motiviert und ersetzt die Dokumente mit der k&uuml;rzesten 
+Ladeverbindungszeit. Die durchschnittlichen Verbindungs-zeiten werden 
+serverweise auf Proxyseite gespeichert und so f&uuml;r einzelne Dokumente 
+unterschiedlicher Gr&ouml;sse die Download-Dauer vorausberechnet.
+
+<H3>HYB - Hybrid Algorithm</H3>
+Auch der HYB-Algorithmus wird in <A HREF="sem-l.html#WA97">[WA97]</A> eingef&uuml;hrt und 
+ausf&uuml;hrlich verglichen. Ergeneriert nicht nur aus Ladezeit, 
+sondern auch aus Gr&ouml;sse und H&auml;ufigkeit der Zugriffe einen
+Entscheidungsfaktor. In <A HREF="sem-l.html#WA97">[WA97]</A> wird dieser mit dem folgenden Ausdruck 
+berechnet:
+
+(c<SUB>ser</SUB>(i) +
+W<SUB>B</SUB>/b<SUB>ser</SUB>)(n<SUB>i</SUB><SUP>W<SUB>N</SUB></SUP>)
+/s<SUB>i</SUB><BR>
+mit:
+<DL>
+<DT>n<SUB>i</SUB><DD>Anzahl der Zugriffe auf das Dokument 
+<DT>i<DD>seit es zuletzt in den Cache geladen worden ist 
+<DT>s<SUB>i</SUB><DD>Gr&ouml;sse des Dokuments i in Byte 
+<DT>c<SUB>ser</SUB>(i)<DD> Zeit zum &Ouml;ffnen einer TCP-Verbindung zum Server des Dokuments i 
+<DT>b<SUB>ser</SUB>(i)<DD> Bandbreite zum Server in Byte/Sec
+<DT>W<SUB>B</SUB>, W<SUB>N</SUB><DD>Konstanten f&uuml;r die relative Gewichtung der Eingangsvariablen n<SUB>i</SUB> und b<SUB>ser</SUB>(i)
+</DL>
+<P>Web-Caches besitzen eine Obergrenze, die auf die Anforderungsrate aus 
+statistischen Untersuchungen zur&uuml;ckzuf&uuml;hren ist, f&uuml;r die 
+Hit-Rate von 30%-50% bei theoretisch unendlicher Cache-Gr&ouml;sse <A HREF="sem-l.html#Abr95">[Abr95]</A>. 
+Ziel der Ersetzungsstrategie ist es, diese theoretischen Werte auch beirealen, 
+kleineren Cache-Speichern zu erreichen. <A HREF="sem-l.html#Abr95">[Abr95]</A> vergleicht die drei LRU 
+Varianten bei ihrem Verhalten Cache-Speicher zu befreien und kommt zu dem 
+Ergebnis, dass der klas-sische LRU schlechter als LRU/MIN und LRU/THOLD 
+abschneidet. Dies liegt daran, dass er unabh&auml;ngig von der Gr&ouml;sse 
+eines Objekts z.B. f&uuml;r ein grosses Video von einem Benutzerviele 
+kleinere Dokumente im Cache ersetzt. Daraus resultieren Cache-Fehler 
+f&uuml;r viele Benutzer. LRU-THOLD h&auml;lt die Cache-Gr&ouml;sse 
+relativ klein, nur ist es schwierig, die effektivste Threshold-Grenze 
+zu finden. Das Ergebnis hinsichtlich der optimalen Ersetzungstrategie 
+f&auml;lltbei <A HREF="sem-l.html#Abr95">[Abr95]</A> folgendermassen aus:
+<EM>use LRU-MIN until the cache size approached 100% of the available disk 
+size, and the switch to LRU-THOLD with a threshold that is gradually reduced,
+until the cache size reaches a low-water mark.</EM>
+<P>Ein weiteres Ergebnis ist die Empfehlung, nonpersistente Client-Caches 
+zusammen miteinem gemeinsamen Proxy zu verwenden. Bei persistenten Caches 
+der einzelnen Clients f&auml;llt die Trefferrate des Proxy Caches mit der 
+Zeit, da sich die Caches der einzelnen Client f&uuml;llen und nur noch 
+Fehlanfragen dort an den Second-Level-Proxy-Cache weitergereicht werden. 
+Mit einer besseren Nutzung des Proxy-Caches kann Speicherplatz gespart 
+werden, und aufgrund der gr&ouml;sseren Anzahl der Zugriffe kann der Proxy 
+Server besser&uuml;ber das Caching einzelner Dokumente entscheiden <A HREF="sem-l.html#Abr95">[Abr95]</A>.
+<P>Im Vergleich zwischen LRU- und LFU-Strategien zeigt sich, dass f&uuml;r 
+den Einsatz bei ProxyCaches die Anzahl der Zugriffe auf ein Dokument statt 
+der Zeit seit dem letzten Zugriff das bessere Entscheidungskriterium ist 
+<A HREF="sem-l.html#Wil96">[Wil96]</A>. Deshalb verwendet der Algorithmus HYB auch diesen Faktor
+<A HREF="sem-l.html#WA97">[WA97]</A>.
+Die Ergebnisse aus <A HREF="sem-l.html#WA97">[WA97]</A> belegen ausserdem, dass eine Ersetzungsstrategie, 
+die nur auf die gesch&auml;tzte Download-Zeit des Objektes (LAT) aufbaut, 
+nicht optimal ist. Die Trefferrateliegt deutlich unter der, die z.B. SIZE 
+bei gleicher Versuchsumgebung ergibt <A HREF="sem-l.html#WA97">[WA97]</A>.
+<P>Der ebenfalls in <A HREF="sem-l.html#WA97">[WA97]</A> gepr&uuml;fte Algorithmus HYB ergibt sowohl bei 
+Trefferrate als auch der Download-Zeit, auf verschiedenen Datenbasen die 
+besten Ergebnisse. Wahrscheinlich ist der Ansatz, mehrere Faktoren in die 
+Ersetzungsentscheidung miteinzubeziehen, sinnvoll und kann die 
+durchschnittlichen Werte verbessern und stabilisieren.Ausserdem 
+darf der psychologische Effekt der grossen Variation der Download-Zeit 
+auf den Benutzer nicht ignoriert werden. Bei Strategien, die die Zeit 
+ber&uuml;cksichtigen, variierendie Download-Zeiten weniger, und dem 
+Benutzer f&auml;llt gleichm&auml;ssig l&auml;ngeres kurzes Warten weniger 
+auf, als langes Warten bei einzelnen Seiten <A HREF="sem-l.html#WA97">[WA97]</A>.
+<P>Alle hier vorgestellten Ersetzungsstrategien haben gemeinsam, dass sie
+&uuml;ber Objektattribute, wie Zeit, Zugriffsh&auml;ufigkeit, Gr&ouml;sse, 
+etc. die Verweildauer im Cache berechnen. Der Inhaltwird nicht bewertet. 
+Dass es hier auch andere Ans&auml;tze gibt, zeigt der 
+<A HREF="SEM-5.HTML#3">Abschnitt 5.3</A>. Dort wird ein besonders f&uuml;r 
+Datenbanken interessanter Ansatz des semantischen Cachings beschrieben.
+<P>
+<FONT SIZE=-1>
+<A NAME="Fuss12">12)</A> Die <A HREf="#Abb4">Abbildung 4</A> zeigt das Zusammenspiel von Client und Server bei einem klassischem GET und die Erg&auml;nzungen, die ein conditional GET bietet.<BR>
+<A NAME="Fuss13">13)</A> beschrieben in RFC 2068<BR>
+</FONT>
+<PRE WIDTH=64>
+----------------------------------------------------------------
+[<A HREF="../">home</A>] [<A HREF="./seminar.html#TOC">TOC</A>] [<A HREF="sem-3.html">prev</A>] [<A HREF="sem-5.html">next</A>] [<A HREF="http://wwwswt.fzi.de/schanne/forum?SMinWWWeb">guestbook</A>] [<A HREF="../email.html">contact</A>]          (c) SM</PRE>
+  </BODY>
+</HTML>

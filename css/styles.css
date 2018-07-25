@@ -13,6 +13,19 @@ h2 {
 	font-size:1.2em;
 }
 
+
+em {
+	color: lightsalmon
+}
+
+pre {
+	font-style: italic;
+	font-size: .75em; 
+	text-align: left;
+	white-space: pre-wrap;
+	color: chocolate
+}
+
 .slides{
 	position:absolute;
 	height:100%;
@@ -63,7 +76,7 @@ section.active {
 
 section.titleSlide, section.endSlide {
 	padding-top:25%;
-	background:#67BEEA url(../images/logo.png) left top no-repeat;
+	background:#67BEEA/* url(../images/logo.png) left top no-repeat*/;
 }
 
 section p {

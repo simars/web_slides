@@ -17,44 +17,153 @@
   <div class="slides">
 
     <section class="titleSlide">
-      <h1>Topic</h1>
-      <h2>by Author</h2>
+      <h1>HTTP-304 Conditional Caching</h1>
+      <h3>Increasing Application Performance with HTTP Cache Headers</h3>
+      <h2>by Simar Singh</h2>
     </section>
 
+
+    
+    <section  style="background: white url(images/dev_front_back_diagram.jpg) no-repeat fixed center; height: 100%;">
+    </section>
+    
+    <section style="display: block">
+        <img style="float: left;" src="images/dev_front_back_joke.jpg"/>
+      <img src="images/full-stack.jpg"/>
+    </section>
+
+
     <section>
-      <h1>Slide 1</h1>
+      <h1>Performance</h1>
       <ul>
-        <li>Point 1</li>
-        <li>Point 2</li>
-        <li>Point 3</li>
+        <li><em>Built</em> - Algorithms / Big 0 | Linear vs Binary Search</li>
+        <li><em>Fueled</em> - Compute, Memory, Disk | Single vs Multi Core ... </li>
+        <li><em>Tuned</em> - GC Tuning, VM Args Heap -Xmx -Xms Suriver Ratio etc</li>
       </ul>
-      <p>Put contenet here - Lorem Ipsum</p>
+      <img src="images/Turn-Off.png" />
+      <p>Sometimes we and get it by <em>Default</em></p>
+      
+      <p>Don’t just turn off the cache. Let <em>browser</em> handle the <em>HTTP Request cache-control Headers</em></p>
+      <br/>
+      <pre style=" width: 50%">
+
+GET /welcome/ HTTP/1.1
+If-Modified-Since: Mon, 26 Jul 1997 05:00:00 GMT
+<del>Cache-Control: no-cache</del>
+<del>Pragma: no-cache</del>
+      </pre>
+    </section>
+
+    
+    <section>
+        <h3><em>Who</em> is turning <em>OFF</em> the HTTP cache? Most often it's <em>not Client side</em> </h3>
+        <img src="images/HTTP_user_brower_cache_backend.png" />
+        <ul>
+            <li>Alice the <em>User</em> doesn't know about cahcing or even HTTP. She is just using her Chrome Browser</li>
+            <li>Or if she left Caching disabled in <em>Chrome Dev Tools</em>?</li>
+            <li>Alice the <em>Developer</em> without any need is disabling the HTTP Cache client side <em>code or script</em></li>        
+        </ul>
+        <pre style=" width: 50%">
+GET /welcome/ HTTP/1.1
+If-Modified-Since: Mon, 26 Jul 1997 05:00:00 GMT
+<del>Cache-Control: no-cache no-store</del>
+<del>Pragma: no-cache</del>
+        </pre>
+        <pre style="background: white url(images/HTTP_chrome_disable_cache.png) no-repeat center center; width: 50%; height: 30% ; background-size: contain"></pre>
+      
+      </section>
+
+      
+    <section>
+        <h3><em>Server Side</em> is likely turning HTTP Caching <em>OFF</em>. But How and Why?</h3>        
+        <p>By default, <em>Spring Security</em> sets specific cache control header values for us, without us having to configure anything such that browser will never cache HTTP responses</p>
+        <pre>
+            
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity
+public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {...}
+
+@GetMapping("/default/users/{name}")
+public ResponseEntity<UserDto> getUserWithDefaultCaching(@PathVariable String name) {
+    return ResponseEntity.ok(new UserDto(name));
+}
+
+The resulting cache-control header will look like this:
+[cache-control: no-cache, no-store, max-age=0, must-revalidate]
+</pre>
+
+<i>Though inefficient, there is actually a good reason for this default behavior – 
+  <em>If one user logs out and another one logs in, we don’t want them to be able to see the previous users resources. </em>
+  It’s much safer to not cache anything by default, and leave <em>us to be responsible for enabling caching explicitly</em>.
+<a target="_blank" href="http://www.baeldung.com/spring-security-cache-control-headers">More...</a>
+</i>
+
+
+      </section>
+      
+    <section  style="background: white url(images/HTTP_caching_checks.jpg) no-repeat fixed center; height: 100%;">
+      <h1><em>Conditional Get</em></h1>  
     </section>
 
     <section>
-      <h1>Slide 2</h1>
-      <img src="images/1680_1050.jpg" />
-      <p>Content comes here....</p>
+      <script src="https://gist.github.com/simars/b90ee14c484ce1af7de97d37225b0921.js"></script>
     </section>
 
+
+    
     <section>
-      <h1>Slide 3</h1>
-      <img src="images/600_400.png" />
-      <p>Slide 3 content comes here</p>
+        <h3>Cache Coherency with <em>Etag</em> (content hash)  | With <em>If-modified-since</em>  (timestamp) </h3>
+        <img src="images/HTTP_304_entities.jpg" />
+        <pre style="background: white url(images/HTTP_etag_mismatch.jpg) no-repeat center center; width: 50%; height: 80% ; background-size: contain"></pre>
+      </section>
+
+    <section style="display: flex; flex-flow: column">
+      <div style="flex:1;background: white url(images/cache_no.png) no-repeat center right; background-size: contain">
+        <pre style="float: left; width: 50%">
+GET /api/auth HTTP/1.1
+
+HTTP/1.1 200 OK
+Cache-Control: no-cache no-store
+Pragma: no-cache</pre>
+      </div>
+      <br/>
+      <div style="flex:1; background: white url(images/cache_local.png) no-repeat center right; background-size: contain">
+        <pre style="float: left; width: 50%">
+GET  /api/welcome.json HTTP/1.1
+If-Modified-Since: Mon, 29 Jun 2018 02:28:12 GMT
+
+HTTP/1.1 304 Not Modified
+Cache-Control: private max-age=0, must-revalidate
+Content-Type: text/json</pre>
+      </div>
+      <br/>
+      <div style="flex:1; background: white url(images/Cache_intermediary.png) no-repeat center right; background-size: contain">
+        <pre style="float: left; width: 50%">
+GET /asset/welcome.html HTTP/1.1
+
+HTTP/1.1 200 OK
+Cache-Control: public max-age=3600, must-revalidate
+Expires: Fri, 30 Oct 1998 14:19:41 GMT
+Last-Modified: Mon, 29 Jun 1998 02:28:12 GMT
+ETag: "3e86-410-3596fbbc"
+Content-Type: text/html
+</pre>
+      </div>
+      <a target="_blank" href="https://devcentral.f5.com/articles/what-is-http-part-viii-compression-and-caching-28927">More...</a>
+
     </section>
 
-    <section>
-      <h1>Slide 3</h1>
-      <ul>
-        <li>Point A</li>
-        <li>Point B</li>
-        <li>Point C</li>
-      </ul>
+    <section  style="background: white url(images/HTTP_ie.jpg) no-repeat fixed center; height: 100%;">
+      <h1>Surprise....<em>Yes it works in IE 6+</em></h1>
+      <a target="blank" href="https://blogs.msdn.microsoft.com/ieinternals/2010/07/08/understanding-conditional-requests-and-refresh/">More...</a>
     </section>
-
+    
     <section class="endSlide">
       <h1>Questions?</h1>
     </section>
+
 
   </div>
 
