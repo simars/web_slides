@@ -155,11 +155,46 @@ Content-Type: text/html
 
     </section>
 
+    <section>
+      <h3>Cache but ensure Browser must revalidate before use</h3>
+      <pre>
+Browser will compare it with the server's version by sending the contents of Last-Modified or ETag, as you wanted.    
+      </pre>
+          
+      <pre><em>max-age=0</em> in Cache-Control header froces browser to recheck your cached-response with the server.</pre>
+      <pre><em>must-revalidate</em> in Cache-Control header says that the cache may not serve this content when it is stale (i.e. "expired"), but must revalidate before that. Yes, caches (and browsers) can in theory be set to serve pages even if they are stale, though the standard says they should warn the user if they do this.</pre>
+      <pre><em>no-cache</em> used to be that you could add instead, but as users have been expecting this to behave as <em>no-store</em>, browsers are gradually treating them the same.</pre>
+      <a target="_blank" href="https://stackoverflow.com/questions/9992733/how-to-cache-a-html-page-with-must-revalidate">More...</a>
+    </section>
+
     <section  style="background: white url(images/HTTP_ie.jpg) no-repeat fixed center; height: 100%;">
       <h1>Surprise....<em>Yes it works in IE 6+</em></h1>
-      <a target="blank" href="https://blogs.msdn.microsoft.com/ieinternals/2010/07/08/understanding-conditional-requests-and-refresh/">More...</a>
+      <a target="_blank" href="https://blogs.msdn.microsoft.com/ieinternals/2010/07/08/understanding-conditional-requests-and-refresh/">More...</a>
     </section>
     
+    <section>
+        <h3>Why is HTTP Response Caching <em>Important?</em></h3>
+        <ul>
+          <li>Improve <em>User Experience</em> with Incresed Speed and Responsive</li>
+          <li>Save <em>Cost</em> over unecessary Data Transfer</li>
+          <li>Save Hardware <em>Resources</em> | (Compute, Memoery and Disk/DB Access)</li>
+        </ul>
+
+        <ul>
+          <li>We cannot control how our <em>clients</em> will access our applications over the <em>Internet</em></li>
+          <li>Many of <em>Clound</em> Native Solutions are <em>sharing resources</em>. Pay per use</li>
+          <li>ISPs are Monetizing over <em>Usage</em> not just <del>connectivity</del></li>
+        </ul>
+        
+        <pre>Governed by HTTP standard; Browser / Agents have gone through decards of evolution to make it work by default</pre>
+        <a target="_blank"  href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests">MDN | HTTP Conditional Get </a>
+        <a target="_blank"  href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9"> HTTP/1.1 RFC, section 14.9</a>
+        <a target="_blank"  href="http://www.baeldung.com/etags-for-rest-with-spring">Spring HTTP ETags</a>
+        <a target="_blank"  href="https://www.logicbig.com/tutorials/spring-framework/spring-web-mvc/last-modified.html">Spring HTTP Last Modified</a>
+        
+      </section>
+  
+
     <section class="endSlide">
       <h1>Questions?</h1>
     </section>
